@@ -17,7 +17,8 @@ void ConvolutionLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
   CHECK_EQ(top->size(), 1) << "Conv Layer takes a single blob as output.";
   KSIZE_ = this->layer_param_.kernelsize();
   STRIDE_ = this->layer_param_.stride();
-  GROUP_ = this->layer_param_.group();
+  // GROUP_ = this->layer_param_.group();
+  GROUP_ = 1;
   PAD_ = this->layer_param_.pad();
   NUM_ = bottom[0]->num();
   CHANNELS_ = bottom[0]->channels();
@@ -30,7 +31,7 @@ void ConvolutionLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
   // overly large memory usage.
   int height_out = (HEIGHT_ + 2 * PAD_ - KSIZE_) / STRIDE_ + 1;
   int width_out = (WIDTH_ + 2 * PAD_ - KSIZE_) / STRIDE_ + 1;
-  col_buffer_.Reshape(1, CHANNELS_ * KSIZE_ * KSIZE_, height_out, width_out);
+  col_buffer_.Reshape(NUM_, CHANNELS_ * KSIZE_ * KSIZE_, height_out, width_out);
   // Set the parameters
   CHECK_EQ(NUM_OUTPUT_ % GROUP_, 0)
       << "Number of output should be multiples of group.";
@@ -38,7 +39,7 @@ void ConvolutionLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
   // Figure out the dimensions for individual gemms.
   M_ = NUM_OUTPUT_ / GROUP_;
   K_ = CHANNELS_ * KSIZE_ * KSIZE_ / GROUP_;
-  N_ = height_out * width_out;
+  N_ = height_out * width_out * NUM_;
   (*top)[0]->Reshape(bottom[0]->num(), NUM_OUTPUT_, height_out, width_out);
   // Check if we need to set up the weights
   if (this->blobs_.size() > 0) {
