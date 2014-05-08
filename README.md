@@ -1,3 +1,5 @@
+**This is a fork from original Caffe.**
+
 [Caffe: Convolutional Architecture for Fast Feature Extraction](http://caffe.berkeleyvision.org)
 
 Created by [Yangqing Jia](http://daggerfs.com), UC Berkeley EECS department.
