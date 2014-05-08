@@ -1,6 +1,7 @@
 // Copyright 2013 Yangqing Jia
 
 #include <vector>
+#include <cstdio>
 
 #include "caffe/layer.hpp"
 #include "caffe/vision_layers.hpp"
@@ -20,6 +21,7 @@ void ConvolutionLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   int weight_offset = M_ * K_;
   int col_offset = K_ * N_;
   int top_offset = M_ * N_;
+  printf("Num: %d\n", NUM_);
   for (int n = 0; n < NUM_; ++n) {
     // First, im2col
     im2col_gpu(bottom_data + bottom[0]->offset(n), CHANNELS_, HEIGHT_,
@@ -38,11 +40,13 @@ void ConvolutionLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
           (Dtype)1., top_data + (*top)[0]->offset(n));
     }
   }
+  cudaDeviceSynchronize();
 }
 
 template <typename Dtype>
 Dtype ConvolutionLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
       const bool propagate_down, vector<Blob<Dtype>*>* bottom) {
+  printf("Num: %d\n", NUM_);
   const Dtype* top_diff = top[0]->gpu_diff();
   const Dtype* weight = this->blobs_[0]->gpu_data();
   Dtype* weight_diff = this->blobs_[0]->mutable_gpu_diff();
@@ -95,6 +99,7 @@ Dtype ConvolutionLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
           bottom_diff + (*bottom)[0]->offset(n));
     }
   }
+  cudaDeviceSynchronize();
   return Dtype(0.);
 }
 
