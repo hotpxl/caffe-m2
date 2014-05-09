@@ -5,7 +5,7 @@ layers {
     type: "data"
     source: "imagenet_train_leveldb"
     meanfile: "../../data/ilsvrc12/imagenet_mean.binaryproto"
-    batchsize: 128
+    batchsize: 64
     cropsize: 227
     mirror: true
   }
