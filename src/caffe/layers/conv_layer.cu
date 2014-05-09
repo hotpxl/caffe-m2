@@ -32,7 +32,6 @@ void ConvolutionLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
         reinterpret_cast<const Dtype*>(bias_multiplier_->gpu_data()),
         (Dtype)1., top_data);
   }
-  cudaDeviceSynchronize();
 }
 
 template <typename Dtype>
@@ -74,7 +73,6 @@ Dtype ConvolutionLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
     col2im_gpu(col_diff, NUM_, CHANNELS_, HEIGHT_, WIDTH_, KSIZE_, PAD_, STRIDE_,
         bottom_diff);
   }
-  cudaDeviceSynchronize();
   return Dtype(0.);
 }
 
