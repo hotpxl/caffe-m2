@@ -211,6 +211,7 @@ const vector<Blob<Dtype>*>& Net<Dtype>::ForwardPrefilled() {
   for (int i = 0; i < layers_.size(); ++i) {
     LOG(ERROR) << "Forwarding " << layer_names_[i];
     layers_[i]->Forward(bottom_vecs_[i], &top_vecs_[i]);
+    cudaDeviceSynchronize();
   }
   return net_output_blobs_;
 }
@@ -258,6 +259,7 @@ Dtype Net<Dtype>::Backward() {
           top_vecs_[i], true, &bottom_vecs_[i]);
       loss += layer_loss;
     }
+    cudaDeviceSynchronize();
   }
   return loss;
 }
