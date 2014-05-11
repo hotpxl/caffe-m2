@@ -49,6 +49,7 @@ class SyncedMemory {
   SyncedHead head() { return head_; }
   size_t size() { return size_; }
   void streamedToGpu(cudaStream_t);
+  void streamedToCpu(cudaStream_t);
  private:
   void to_cpu();
   void to_gpu();

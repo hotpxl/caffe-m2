@@ -39,6 +39,26 @@ void SyncedMemory::streamedToGpu(cudaStream_t stream) {
   }
 }
 
+void SyncedMemory::streamedToCpu(cudaStream_t stream) {
+  switch (head_) {
+  case UNINITIALIZED:
+    CaffeMallocHost(&cpu_ptr_, size_);
+    memset(cpu_ptr_, 0, size_);
+    head_ = HEAD_AT_CPU;
+    break;
+  case HEAD_AT_GPU:
+    if (cpu_ptr_ == NULL) {
+      CaffeMallocHost(&cpu_ptr_, size_);
+    }
+    CUDA_CHECK(cudaMemcpyAsync(cpu_ptr_, gpu_ptr_, size_, cudaMemcpyDeviceToHost, stream));
+    head_ = SYNCED;
+    break;
+  case HEAD_AT_CPU:
+  case SYNCED:
+    break;
+  }
+}
+
 inline void SyncedMemory::to_cpu() {
   switch (head_) {
   case UNINITIALIZED:
