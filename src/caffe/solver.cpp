@@ -62,6 +62,7 @@ void Solver<Dtype>::Solve(const char* resume_file) {
     net_->Update();
 
     if (param_.display() && iter_ % param_.display() == 0) {
+      cudaDeviceSynchronize();
       LOG(INFO) << "Iteration " << iter_ << ", loss = " << loss;
     }
     if (param_.test_interval() && iter_ % param_.test_interval() == 0) {
