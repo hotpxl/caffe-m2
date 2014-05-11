@@ -19,6 +19,26 @@ SyncedMemory::~SyncedMemory() {
   }
 }
 
+void SyncedMemory::streamedToGpu(cudaStream_t stream) {
+  switch (head_) {
+  case UNINITIALIZED:
+    CUDA_CHECK(cudaMalloc(&gpu_ptr_, size_));
+    CUDA_CHECK(cudaMemset(gpu_ptr_, 0, size_));
+    head_ = HEAD_AT_GPU;
+    break;
+  case HEAD_AT_CPU:
+    if (gpu_ptr_ == NULL) {
+      CUDA_CHECK(cudaMalloc(&gpu_ptr_, size_));
+    }
+    CUDA_CHECK(cudaMemcpyAsync(gpu_ptr_, cpu_ptr_, size_, cudaMemcpyHostToDevice, stream));
+    head_ = SYNCED;
+    break;
+  case HEAD_AT_GPU:
+  case SYNCED:
+    break;
+  }
+}
+
 inline void SyncedMemory::to_cpu() {
   switch (head_) {
   case UNINITIALIZED:

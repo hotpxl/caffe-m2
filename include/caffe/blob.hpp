@@ -43,7 +43,13 @@ class Blob {
       const int w) const {
     return *(cpu_diff() + offset(n, c, h, w));
   }
-
+  inline void swap(Blob& b) {
+      data_.swap(b.data_);
+      diff_.swap(b.diff_);
+  }
+  inline void streamedDataToGpu(cudaStream_t stream) {
+      data_->streamedToGpu(stream);
+  }
   const Dtype* cpu_data() const;
   const Dtype* gpu_data() const;
   const Dtype* cpu_diff() const;

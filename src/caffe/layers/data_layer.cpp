@@ -15,6 +15,8 @@ using std::string;
 
 namespace caffe {
 
+cudaStream_t copyStream = 0;
+
 template <typename Dtype>
 void* DataLayerPrefetch(void* layer_pointer) {
   CHECK(layer_pointer);
@@ -113,7 +115,11 @@ void* DataLayerPrefetch(void* layer_pointer) {
       layer->iter_->SeekToFirst();
     }
   }
-
+  if (!copyStream) {
+      CUDA_CHECK(cudaStreamCreate(&copyStream));
+  }
+  layer->prefetch_data_->streamedDataToGpu(copyStream);
+  layer->prefetch_label_->streamedDataToGpu(copyStream);
   return reinterpret_cast<void*>(NULL);
 }
 

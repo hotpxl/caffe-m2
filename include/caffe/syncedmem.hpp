@@ -24,11 +24,13 @@ namespace caffe {
 // does not seem to create a memory bottleneck here.
 
 inline void CaffeMallocHost(void** ptr, size_t size) {
-  *ptr = malloc(size);
+  cudaHostAlloc(ptr, size, 0);
+  // *ptr = malloc(size);
 }
 
 inline void CaffeFreeHost(void* ptr) {
-  free(ptr);
+  cudaFreeHost(ptr);
+  // free(ptr);
 }
 
 
@@ -46,6 +48,7 @@ class SyncedMemory {
   enum SyncedHead { UNINITIALIZED, HEAD_AT_CPU, HEAD_AT_GPU, SYNCED };
   SyncedHead head() { return head_; }
   size_t size() { return size_; }
+  void streamedToGpu(cudaStream_t);
  private:
   void to_cpu();
   void to_gpu();
