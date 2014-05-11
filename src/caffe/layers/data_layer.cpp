@@ -19,11 +19,16 @@ cudaStream_t copyStream = 0;
 
 template <typename Dtype>
 void* DataLayerPrefetch(void* layer_pointer) {
+  if (!copyStream) {
+      CUDA_CHECK(cudaStreamCreate(&copyStream));
+  }
   CHECK(layer_pointer);
   DataLayer<Dtype>* layer = reinterpret_cast<DataLayer<Dtype>*>(layer_pointer);
   CHECK(layer);
   Datum datum;
   CHECK(layer->prefetch_data_);
+  layer->prefetch_data_->streamedDataToCpu(copyStream);
+  layer->prefetch_label_->streamedDataToCpu(copyStream);
   Dtype* top_data = layer->prefetch_data_->mutable_cpu_data();
   Dtype* top_label = layer->prefetch_label_->mutable_cpu_data();
   const Dtype scale = layer->layer_param_.scale();
@@ -114,9 +119,6 @@ void* DataLayerPrefetch(void* layer_pointer) {
       DLOG(INFO) << "Restarting data prefetching from start.";
       layer->iter_->SeekToFirst();
     }
-  }
-  if (!copyStream) {
-      CUDA_CHECK(cudaStreamCreate(&copyStream));
   }
   layer->prefetch_data_->streamedDataToGpu(copyStream);
   layer->prefetch_label_->streamedDataToGpu(copyStream);
