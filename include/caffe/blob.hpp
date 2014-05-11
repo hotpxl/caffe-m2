@@ -51,7 +51,7 @@ class Blob {
       data_->streamedToGpu(stream);
   }
   inline void streamedDataToCpu(cudaStream_t stream) {
-      data_->streamedToCpu(stream);
+      data_->streamedToCpuNoCopy(stream);
   }
   const Dtype* cpu_data() const;
   const Dtype* gpu_data() const;
