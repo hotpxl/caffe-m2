@@ -24,7 +24,6 @@ int getLock() {
 
 template <typename Dtype>
 void* DataLayerPrefetch(void* layer_pointer) {
-  LOG(INFO) << "Thread prefetch created";
   if (!copyStream) {
       CUDA_CHECK(cudaStreamCreate(&copyStream));
   }
