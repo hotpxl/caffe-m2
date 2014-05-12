@@ -11,6 +11,9 @@
 
 namespace caffe {
 
+cudaStream_t calcStream[2] = {0, 0};
+extern int lock;
+
 template <typename Dtype>
 void ConvolutionLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top) {
@@ -59,16 +62,21 @@ Dtype ConvolutionLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
   im2col_gpu(bottom_data, NUM_, CHANNELS_, HEIGHT_,
                     WIDTH_, KSIZE_, PAD_, STRIDE_, col_data);
   // gradient w.r.t. weight. Note that we will accumulate diffs.
+  if (!calcStream[0]) {
+    CUDA_CHECK(cudaStreamCreate(&calcStream[0]));
+    CUDA_CHECK(cudaStreamCreate(&calcStream[1]));
+  }
+  lock = 1;
   caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasTrans, M_, K_, N_,
       (Dtype)1., top_diff,
       col_data, (Dtype)0.,
-      weight_diff);
+      weight_diff, calcStream[0]);
   // gradient w.r.t. bottom data, if necessary
   if (propagate_down) {
     caffe_gpu_gemm<Dtype>(CblasTrans, CblasNoTrans, K_, N_, M_,
       (Dtype)1., weight,
       top_diff,
-      (Dtype)0., col_diff);
+      (Dtype)0., col_diff, calcStream[1]);
     // col2im back to the data
     col2im_gpu(col_diff, NUM_, CHANNELS_, HEIGHT_, WIDTH_, KSIZE_, PAD_, STRIDE_,
         bottom_diff);

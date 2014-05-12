@@ -16,9 +16,15 @@ using std::string;
 namespace caffe {
 
 cudaStream_t copyStream = 0;
+int lock = 1;
+
+int getLock() {
+    return lock;
+}
 
 template <typename Dtype>
 void* DataLayerPrefetch(void* layer_pointer) {
+  LOG(INFO) << "Thread prefetch created";
   if (!copyStream) {
       CUDA_CHECK(cudaStreamCreate(&copyStream));
   }
@@ -120,8 +126,11 @@ void* DataLayerPrefetch(void* layer_pointer) {
       layer->iter_->SeekToFirst();
     }
   }
+  while (!getLock());
+  LOG(INFO) << "Lock released";
   layer->prefetch_data_->streamedDataToGpu(copyStream);
   layer->prefetch_label_->streamedDataToGpu(copyStream);
+  lock = 0;
   return reinterpret_cast<void*>(NULL);
 }
 
