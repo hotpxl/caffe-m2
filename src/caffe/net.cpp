@@ -209,13 +209,13 @@ void Net<Dtype>::GetLearningRateAndWeightDecay() {
 template <typename Dtype>
 const vector<Blob<Dtype>*>& Net<Dtype>::ForwardPrefilled() {
   for (int i = 0; i < layers_.size(); ++i) {
-    LOG(ERROR) << "Forwarding " << layer_names_[i];
+    // LOG(ERROR) << "Forwarding " << layer_names_[i];
     layers_[i]->Forward(bottom_vecs_[i], &top_vecs_[i]);
-    cudaError_t err = cudaDeviceSynchronize();
-    if (err != cudaSuccess) {
-        LOG(ERROR) << cudaGetErrorString(err);
-        exit(1);
-    }
+    // cudaError_t err = cudaDeviceSynchronize();
+    // if (err != cudaSuccess) {
+    //     LOG(ERROR) << cudaGetErrorString(err);
+    //     exit(1);
+    // }
   }
   return net_output_blobs_;
 }
@@ -257,17 +257,17 @@ template <typename Dtype>
 Dtype Net<Dtype>::Backward() {
   Dtype loss = 0;
   for (int i = layers_.size() - 1; i >= 0; --i) {
-    LOG(ERROR) << "Backwarding " << layer_names_[i];
+    // LOG(ERROR) << "Backwarding " << layer_names_[i];
     if (layer_need_backward_[i]) {
       Dtype layer_loss = layers_[i]->Backward(
           top_vecs_[i], true, &bottom_vecs_[i]);
       loss += layer_loss;
     }
-    cudaError_t err = cudaDeviceSynchronize();
-    if (err != cudaSuccess) {
-        LOG(ERROR) << cudaGetErrorString(err);
-        exit(1);
-    }
+    // cudaError_t err = cudaDeviceSynchronize();
+    // if (err != cudaSuccess) {
+    //     LOG(ERROR) << cudaGetErrorString(err);
+    //     exit(1);
+    // }
   }
   return loss;
 }
