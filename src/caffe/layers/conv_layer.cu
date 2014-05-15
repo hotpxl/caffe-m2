@@ -59,8 +59,8 @@ Dtype ConvolutionLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
   }
   // since we saved memory in the forward pass by not storing all col data,
   // we will need to recompute them.
-  im2col_gpu(bottom_data, NUM_, CHANNELS_, HEIGHT_,
-                    WIDTH_, KSIZE_, PAD_, STRIDE_, col_data);
+  // im2col_gpu(bottom_data, NUM_, CHANNELS_, HEIGHT_,
+  //                  WIDTH_, KSIZE_, PAD_, STRIDE_, col_data);
   // gradient w.r.t. weight. Note that we will accumulate diffs.
   if (!calcStream[0]) {
     CUDA_CHECK(cudaStreamCreate(&calcStream[0]));

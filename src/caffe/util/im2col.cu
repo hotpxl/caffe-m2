@@ -67,10 +67,10 @@ template void im2col_gpu<double>(const double* data_im, const int num, const int
     const int height, const int width, const int ksize, const int pad,
     const int stride, double* data_col);
 
-#if 0
+#if 1
 template <typename Dtype>
 __global__ void col2im_gpu_kernel(const int n, const Dtype* data_col, const int num,
-    const int height, const int width, const int channels, const int ksize, const int channelNum,
+    const int height, const int width, const int ksize, const int channelNum,
     const int pad, const int stride, const int height_col, const int width_col,
     Dtype* data_im) {
   CUDA_KERNEL_LOOP(index, n) {
@@ -159,10 +159,10 @@ void col2im_gpu(const Dtype* data_col, const int num, const int channels,
   // To avoid involving atomic operations, we will launch one kernel per
   // bottom dimension, and then in the kernel add up the top dimensions.
   // NOLINT_NEXT_LINE(whitespace/operators)
-#if 0
+#if 1
   col2im_gpu_kernel<Dtype><<<CAFFE_GET_BLOCKS(num_kernels),
                              CAFFE_CUDA_NUM_THREADS>>>(
-      num_kernels, data_col, num, height, width, channels, ksize, channels, pad, stride,
+      num_kernels, data_col, num, height, width, ksize, channels, pad, stride,
       height_col, width_col, data_im);
 #else
   col2im_gpu_kernel<Dtype><<<CAFFE_GET_BLOCKS(num_kernels), CAFFE_CUDA_NUM_THREADS>>>(num_kernels, data_col, num, height, width, channels, ksize, pad, stride, height_col, width_col, data_im);
