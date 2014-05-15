@@ -21,7 +21,6 @@ void DataLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   // First, join the thread
   CHECK(!pthread_join(thread_, NULL)) << "Pthread joining failed.";
   // Copy the data
-  LOG(INFO) << "COPYING";
   // CUDA_CHECK(cudaMemcpy((*top)[0]->mutable_gpu_data(),
   //     prefetch_data_->cpu_data(), sizeof(Dtype) * prefetch_data_->count(),
   //     cudaMemcpyHostToDevice));
@@ -30,7 +29,6 @@ void DataLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   //     cudaMemcpyHostToDevice));
   (*top)[0]->swap(*prefetch_data_);
   (*top)[1]->swap(*prefetch_label_);
-  LOG(INFO) << "COPYING DONE";
   // Start a new prefetch thread
   CHECK(!pthread_create(&thread_, NULL, DataLayerPrefetch<Dtype>,
       reinterpret_cast<void*>(this))) << "Pthread execution failed.";

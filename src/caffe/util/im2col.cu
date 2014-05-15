@@ -63,6 +63,7 @@ template void im2col_gpu<double>(const double* data_im, const int num, const int
     const int height, const int width, const int ksize, const int pad,
     const int stride, double* data_col);
 
+#if 0
 template <typename Dtype>
 __global__ void col2im_gpu_kernel(const int n, const Dtype* data_col, const int num,
     const int height, const int width, const int channels, const int ksize, const int channelNum,
@@ -100,6 +101,43 @@ __global__ void col2im_gpu_kernel(const int n, const Dtype* data_col, const int 
     data_im[index] = val;
   }
 }
+#else
+template <typename T> __global__ void col2im_gpu_kernel(const int n, const T* dataCol, const int num, const int height, const int width, const int channelNum, const int ksize, const int pad, const int stride, const int heightCol, const int widthCol, T* dataImage) {
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+  int widthOffsetInCol = index % widthCol;
+  int heightOffsetInCol = index / widthCol % heightCol;
+  int imageIdx = index / widthCol / heightCol;
+  for (int i = 0; i < channelNum * ksize * ksize; ++i) {
+    int w = i % ksize;
+    int h = i / ksize % ksize;
+    int c = i / ksize / ksize;
+    int widthOffsetInImage = widthOffsetInCol * stride + w - pad;
+    int heightOffsetInImage = heightOffsetInCol * stride + h - pad;
+    if (0 <= widthOffsetInImage && widthOffsetInImage < width && 0 <= heightOffsetInImage && heightOffsetInImage < height) {
+      *(dataImage + (((imageIdx * channelNum + c) * height + heightOffsetInImage) * width + widthOffsetInImage)) += dataCol[(((i * num + imageIdx) * heightCol + heightOffsetInCol) * widthCol + widthOffsetInCol)];
+    }
+    break;
+  }
+}
+
+template <> __global__ void col2im_gpu_kernel<float>(const int n, const float* dataCol, const int num, const int height, const int width, const int channelNum, const int ksize, const int pad, const int stride, const int heightCol, const int widthCol, float* dataImage) {
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+  int widthOffsetInCol = index % widthCol;
+  int heightOffsetInCol = index / widthCol % heightCol;
+  int imageIdx = index / widthCol / heightCol;
+  for (int i = 0; i < channelNum * ksize * ksize; ++i) {
+    int w = i % ksize;
+    int h = i / ksize % ksize;
+    int c = i / ksize / ksize;
+    int widthOffsetInImage = widthOffsetInCol * stride + w - pad;
+    int heightOffsetInImage = heightOffsetInCol * stride + h - pad;
+    if (0 <= widthOffsetInImage && widthOffsetInImage < width && 0 <= heightOffsetInImage && heightOffsetInImage < height) {
+      atomicAdd(dataImage + (((imageIdx * channelNum + c) * height + heightOffsetInImage) * width + widthOffsetInImage), dataCol[(((i * num + imageIdx) * heightCol + heightOffsetInCol) * widthCol + widthOffsetInCol)]);
+    }
+    break;
+  }
+}
+#endif
 
 template <typename Dtype>
 void col2im_gpu(const Dtype* data_col, const int num, const int channels,
@@ -109,17 +147,21 @@ void col2im_gpu(const Dtype* data_col, const int num, const int channels,
   //            sizeof(Dtype) * height * width * channels));
   int height_col = (height + 2 * pad - ksize) / stride + 1;
   int width_col = (width + 2 * pad - ksize) / stride + 1;
-  int num_kernels = num * channels * height * width;
+  // int num_kernels = num * channels * height * width;
+  int num_kernels = num * height_col * width_col;
   // To avoid involving atomic operations, we will launch one kernel per
   // bottom dimension, and then in the kernel add up the top dimensions.
   // NOLINT_NEXT_LINE(whitespace/operators)
+#if 0
   col2im_gpu_kernel<Dtype><<<CAFFE_GET_BLOCKS(num_kernels),
                              CAFFE_CUDA_NUM_THREADS>>>(
       num_kernels, data_col, num, height, width, channels, ksize, channels, pad, stride,
       height_col, width_col, data_im);
+#else
+  col2im_gpu_kernel<Dtype><<<CAFFE_GET_BLOCKS(num_kernels), CAFFE_CUDA_NUM_THREADS>>>(num_kernels, data_col, num, height, width, channels, ksize, pad, stride, height_col, width_col, data_im);
+#endif
   CUDA_POST_KERNEL_CHECK;
 }
-
 
 // Explicit instantiation
 template void col2im_gpu<float>(const float* data_col, const int num, const int channels,
@@ -128,6 +170,5 @@ template void col2im_gpu<float>(const float* data_col, const int num, const int 
 template void col2im_gpu<double>(const double* data_col, const int num, const int channels,
     const int height, const int width, const int psize, const int pad,
     const int stride, double* data_im);
+}
 
-
-}  // namespace caffe
